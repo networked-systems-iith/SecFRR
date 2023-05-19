@@ -1,4 +1,5 @@
-RoutscoutROUTESCOUT is a closed-loop control system that dynamically adapts how a stub AS forwardsits outgoing traffic across multiple policy-compliant routes according to observed performance and the operator’s objectives. By evaluating average delays and losses of all routes at regularintervals, ROUTSCOUT makes splitting decisions according to the operator’s objectives. Thiscode mimics the ROUTSCOUT implementation for a pcap.
+"Routscout:
+ROUTESCOUT is a closed-loop control system that dynamically adapts how a stub AS forwardsits outgoing traffic across multiple policy-compliant routes according to observed performance and the operator’s objectives. By evaluating average delays and losses of all routes at regularintervals, ROUTSCOUT makes splitting decisions according to the operator’s objectives. Thiscode mimics the ROUTSCOUT implementation for a pcap.
 
 Getting Started
 1.Dependencies
