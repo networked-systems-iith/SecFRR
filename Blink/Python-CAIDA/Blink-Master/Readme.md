@@ -27,7 +27,7 @@ python setup.py build_ext --inplace
     * `mkdir slidingwindow-logs`
     * `mkdir retransmission-logs`
  
-5.Then you can start the controller version of the python implementation with:
+5. Then you can start the controller version of the python implementation with:
 
 ```
 python -m python_code.controller.controller -p 10000 --prefixes_file python_code/pcap/prefixes_file.txt
