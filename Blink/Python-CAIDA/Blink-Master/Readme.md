@@ -6,7 +6,7 @@ This is the repository of code that we have used to simulate a Blink based sytem
 `controller` contains the controller code of Blink, written in Python.<br/>
 `util` contains few helper files  
 
-#Getting Started :
+# Getting Started :
 
 1. Ensure that the python version being used to run the files is version 2.7.18 and the dependencies( with versions) mentioned in requirements.txt are downloaded before going ahead with the next steps.
 2. Installation :
@@ -40,7 +40,7 @@ python -m python_code.blink.main -p 10000 --pcap <path to pcap file>
 ```
 7. Once you get the code working you can look into various aspects of the code to modify the parameters of the set up such as blink monitoring window, flow stats manitoring window ( in p4pipeline.py file in python_code) etc.
 
-#Understanding the Output: 
+# Understanding the Output: 
 
 Should mention more about the generated logs ??
 
