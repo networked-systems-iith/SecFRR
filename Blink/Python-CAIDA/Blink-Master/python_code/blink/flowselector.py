@@ -87,8 +87,13 @@ class FlowSelector:
             self.retr = 0
             #print 'lol_uw1',shift
             for i in xrange(0, int(shift)):
-                #print 'lol_uw_i',i
-                self.log_ret.info(format((self.registers['sw_sum'][prefix_id]*100 )/64.0,'f'))
+
+                ct1 = 0
+                for ind,x in enumerate(self.features['fs']):
+                    if x != 0:
+                        ct1+=1
+                        
+                self.log_ret.info(format((self.registers['sw_sum'][prefix_id]*100 )/float(ct1),'f'))
                 self.rtt = format((self.registers['sw_sum'][prefix_id]*100 )/64.0,'f')
                 #print('flowselector : ',self.rtt) 
                 self.log_sw.info(str(prefix_id)+'\t'+str(round(self.registers['sw_time'][prefix_id], 2)) \
