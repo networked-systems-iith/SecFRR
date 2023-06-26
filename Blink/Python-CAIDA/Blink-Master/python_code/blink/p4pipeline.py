@@ -140,6 +140,7 @@ class P4Pipeline:
                 fd = ''
                 ct1 = 0
                 ct2 =0
+                self.time+=wind_size
                 for ind,x in enumerate(temp['fs']):
                     if x != 0:
                         ct1+=1
@@ -150,7 +151,7 @@ class P4Pipeline:
                 self.log2.info(fs+'\n')
                 self.log2.info(fd+'\n')
                 self.ctr_.append(ct1)
-                self.time+=wind_size
+                
         
         # keeping count of the flows in the pcap
         t1 = (packet.src_ip,packet.dst_ip,packet.src_port,packet.dst_port)
