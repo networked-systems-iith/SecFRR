@@ -21,7 +21,7 @@ To get started with using the attack detection mechanism, follow these steps:
 4. Integrate the mechanism with your fast reroute system for continuous monitoring.
 
 ## Usage
-Detailed usage instructions and examples are provided in the documentation (`docs` directory). Review the documentation before deploying the attack detection mechanism in your network environment.
+Review the `dependencies\` before deploying the attack detection mechanism in your network environment. Instructions present in the README files.
 
 ## Contributions
 We welcome contributions from researchers and practitioners interested in enhancing the security of fast reroute systems. Whether it's code improvements, additional attack scenarios, or further validation, your input is valuable in fortifying network resilience against malicious threats.
@@ -30,7 +30,7 @@ We welcome contributions from researchers and practitioners interested in enhanc
 This work is supported by the National Security Council Secretariat (NSCS), India, and the Prime Minister's Research Fellowship (PMRF) program, India.
 
 ## Citation
-If you find our work useful in your research, please consider citing our paper.
+If you find our work useful in your research, please feel free to cite our paper.
 
 Additionally, you may find our following work relevant:
 
