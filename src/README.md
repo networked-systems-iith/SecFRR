@@ -1,5 +1,3 @@
-**README**
-
 **Section 1: FRR Systems Blink and RouteScout - Add Feature Extraction Plugin**
 
 This README provides instructions for integrating a feature extraction plugin into FRR Systems' Blink and RouteScout. To enhance the functionality of FRR Systems' Blink and RouteScout, you can integrate a feature extraction plugin. This plugin facilitates the extraction of specific features from data packets or network traffic.
