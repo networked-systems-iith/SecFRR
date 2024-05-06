@@ -1,4 +1,4 @@
-# Blink: 
+## Blink: 
 
 This is the repository of code that we have used to simulate a Blink based sytem.
 
@@ -6,7 +6,7 @@ This is the repository of code that we have used to simulate a Blink based sytem
 `controller` contains the controller code of Blink, written in Python.<br/>
 `util` contains few helper files  
 
-# Getting Started :
+### Getting Started :
 
 1. Ensure that the python version being used to run the files is version 2.7.18 and the dependencies( with versions) mentioned in requirements.txt are downloaded before going ahead with the next steps.
 2. Installation :
