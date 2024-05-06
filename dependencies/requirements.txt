@@ -1,0 +1,13 @@
+# Requirements.txt
+
+scapy
+statistics
+numpy
+scipy
+pandas
+ipaddr
+mmh3
+pathlib
+os
+threading
+
