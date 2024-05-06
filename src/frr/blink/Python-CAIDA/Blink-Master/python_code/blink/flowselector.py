@@ -17,7 +17,9 @@ class FlowSelector:
     def __init__(self, pcap_file,log_dir, log_level, registers, features, fd_start, key_size, nb_flows=64, \
     timeout=2, seed=1, window_size=10, bin_time=0.08):
 
+        self.flag =0
         self.ctr=0
+        self.temp = []
         pcap = pcap_file.split('/')[-1]
         
         self.rtt = 0
@@ -31,7 +33,7 @@ class FlowSelector:
         self.log_sw = logging.getLogger('sliding_window')
         
         # Logger for the retransmissions per windowretransmission-logs  
-        logger.setup_logger('retr_window', log_dir+'/retransmission-logs/'+pcap+'.log', level=10)
+        logger.setup_logger('retr_window', log_dir+'/retransmission_logs/'+pcap+'.log', level=10)
         self.log_ret = logging.getLogger('retr_window')
 
         self.registers = registers
@@ -76,6 +78,7 @@ class FlowSelector:
             self.registers['sw_time'][prefix_id] = packet.ts
             self.registers['sw_index'][prefix_id] = 0
             self.registers['sw_sum'][prefix_id] = 0
+            self.ctr = 0
 
             for i in range(prefix_id*self.window_size, (prefix_id+1)*self.window_size):
                 self.registers['sw'][i] = 0
@@ -87,15 +90,43 @@ class FlowSelector:
             self.retr = 0
             #print 'lol_uw1',shift
             for i in xrange(0, int(shift)):
-
+                #print 'lol_uw_i',i
                 ct1 = 0
+                ct2 = 0
                 for ind,x in enumerate(self.features['fs']):
                     if x != 0:
                         ct1+=1
-                        
-                self.log_ret.info(format((self.registers['sw_sum'][prefix_id]*100 )/float(ct1),'f'))
-                self.rtt = format((self.registers['sw_sum'][prefix_id]*100 )/64.0,'f')
-                #print('flowselector : ',self.rtt) 
+                for ind,x in enumerate(self.registers['flowselector_last_ret']):
+                    if x != 0:
+                        ct2+=1
+                #float(ct1)
+                s1 = 0
+                s2 = 0
+                for i in range(len(self.features['ret_flag'])):
+                    s1+=self.features['ret_flag'][i]
+                    s2+=self.features['old_ret'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]][i]
+
+                self.log_ret.info(format((self.registers['sw_sum'][prefix_id]*100 )/float(ct1),'f')+'  '+str(ct1)+'  '+str(self.registers['sw_sum'][prefix_id]))
+                self.rtt = format((self.registers['sw_sum'][prefix_id]*100 )/float(ct1),'f')
+                self.temp.append(s2 == self.registers['sw'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]])
+                if self.flag ==0 :#and float(self.rtt) >= 20.0:
+                    self.flag =1 
+                    temp = self.features
+                    fs = ''
+                    fd = ''
+                    ct1 = 0
+                    
+                    for ind,x in enumerate(temp['fs']):
+                        if x != 0:
+                            ct1+=1
+                            fs = fs + str(x) + ',' 
+                            fd = fd +self.registers['flowselector_5tuple'][ind]+' \n' #str(temp['fd'][ind]-self.ts_)+',' #
+                    # with open('result2.txt','w') as fl:                       
+                    #     fl.write(str(self.rtt) + '\n')
+                    #     #fl.write(fs+'\n')
+                    #     fl.write(fd+'\n')
+
+                
                 self.log_sw.info(str(prefix_id)+'\t'+str(round(self.registers['sw_time'][prefix_id], 2)) \
                     +'\t'+str(self.registers['sw_sum'][prefix_id])+'\t'+ \
                     str(len(self.ssd_dic[packet.metadata['id']][0].flow_dic))+'\t'+ \
@@ -107,12 +138,25 @@ class FlowSelector:
                 self.registers['sw_time'][prefix_id] += self.bin_time
                 self.registers['sw_index'][prefix_id] = (self.registers['sw_index'][prefix_id] + 1)%self.window_size
                 self.registers['sw_sum'][prefix_id] -= self.registers['sw'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]]
+                self.ctr -= self.registers['sw'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]]
+                temp = 0
+                for i in range(len(self.features['ret_flag'])):
+                    self.features['ret_flag'][i] -= self.features['old_ret'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]][i]
+                    #temp += self.features['old_ret'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]][i]
+
+                #self.features['ret_flag'][0] -= self.registers['sw'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]]
+                
+                    
                 self.registers['sw'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]] = 0
+                for i in range(len(self.features['old_ret'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]])):
+                    self.features['old_ret'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]][i] = 0
+
 
         assert self.registers['sw_sum'][prefix_id] == sum(self.registers['sw'][(prefix_id*self.window_size):(prefix_id*self.window_size)+self.window_size]), str(packet.metadata['id'])
         self.bogus_trace[packet.metadata['id']] = False
 
     def process_packet(self, packet):
+        
         self.update_window(packet)
         # Create (if not yet created) the ssd for this prefix, and update it
         # based on the new timestamp
@@ -155,6 +199,8 @@ class FlowSelector:
         if curflow_key == newflow_key:
 
             if packet.fin_flag:
+                #print('3   ',str(packet.src_ip)+' '+str(packet.dst_ip)+' '+str(packet.src_port)+' '+str(packet.dst_port),'   ',packet.ts)
+                #print('3   ',self.registers['flowselector_5tuple'][index],'   ',packet.ts)
                 # Update the sliding window if that flow has sent a retransmission
                 # during the last time window
                 last_ret_ts = self.registers['flowselector_last_ret'][index]
@@ -173,12 +219,14 @@ class FlowSelector:
                 if last_ret_ts > 0 and packet.ts - last_ret_ts < self.bin_time * self.window_size:
                     tmp = int((packet.ts - last_ret_ts)/self.bin_time)
                     index_prev = int((self.registers['sw_index'][prefix_id] - tmp)%self.window_size)
-
                     self.registers['sw'][(prefix_id*self.window_size)+index_prev] -= 1
+                    self.features['old_ret'][(prefix_id*self.window_size)+index_prev][index] -= 1
                     if self.registers['sw'][(prefix_id*self.window_size)+index_prev] < 0:
                         self.log.warning('1\t'+str(packet.metadata['id']))
 
                     self.registers['sw_sum'][prefix_id] -= 1
+                    self.ctr -= 1
+                    self.features['ret_flag'][index] -= 1
                 else:
                     #print self.retr
                     self.retr+=1
@@ -199,16 +247,20 @@ class FlowSelector:
                 # Make FS and FD Features to 0
                 self.features['fs'][index] = 0
                 self.features['fd'][index] = 0
+                self.features['rtt'][index] = 0
+                self.features['pkt_ct'][index] = 0
+                self.features['pkt_lt'][index] = 0
                 self.fd_start[index] = 0
                 #self.features['index'] = 0
-
+                
                 self.nb_monitored_flows[packet.metadata['id']] -= 1
 
                 packet.metadata['nb_flows_monitored'] = self.nb_monitored_flows[packet.metadata['id']]
                 
                 return False
             else:
-
+                #print('2   ',str(packet.src_ip)+' '+str(packet.dst_ip)+' '+str(packet.src_port)+' '+str(packet.dst_port),'   ',packet.ts)
+                #print('2   ',self.registers['flowselector_5tuple'][index],'   ',packet.ts)
                 # Check if this packet is a retransmission and update the next value
                 next_expected_seq = packet.seq+packet.tcp_payload_len
                 last_ret_ts = self.registers['flowselector_last_ret'][index]
@@ -221,20 +273,26 @@ class FlowSelector:
                     if last_ret_ts == 0 or packet.ts - last_ret_ts > self.bin_time * self.window_size:
                         self.retr+=1
                         self.registers['sw'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]] += 1
+                        self.features['old_ret'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]][index] += 1
                         self.registers['sw_sum'][prefix_id] += 1
+                        self.ctr += 1
+                        self.features['ret_flag'][index] += 1
                         self.registers['flowselector_last_ret'][index] = self.registers['sw_time'][prefix_id]
 
                     elif packet.ts - last_ret_ts < self.bin_time * self.window_size:
                         tmp = int((packet.ts - last_ret_ts)/self.bin_time)
                         index_prev = int((self.registers['sw_index'][prefix_id] - tmp)%self.window_size)
-
                         # Do -1 on the index of the previous detected retransmission for that flow
+
                         self.registers['sw'][(prefix_id*self.window_size)+index_prev] -= 1
+                        self.features['old_ret'][(prefix_id*self.window_size)+index_prev][index] -= 1
+                            #print(self.registers['flowselector_5tuple'][index],packet.ts,self.features['fd'][index])
                         if self.registers['sw'][(prefix_id*self.window_size)+index_prev] < 0:
                             self.log.warning('1\t'+str(packet.metadata['id']))
 
                         # Do +1 on the current index
                         self.registers['sw'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]] += 1
+                        self.features['old_ret'][(prefix_id*self.window_size)+self.registers['sw_index'][prefix_id]][index] += 1
 
                         self.registers['flowselector_last_ret'][index] = self.registers['sw_time'][prefix_id]
 
@@ -249,9 +307,14 @@ class FlowSelector:
 
                 # Update fs and fd feature
                 self.features['fs'][index] = self.features['fs'][index] + packet.tcp_payload_len
-                #self.features['fd'][index] = packet.ts - self.fd_start[index]  
+                #print('2   ',self.registers['flowselector_5tuple'][index],'   ',packet.ts)
+                if self.features['pkt_lt'][index] != 0:
+                    self.features['rtt'][index] += (packet.ts-self.features['pkt_lt'][index])
+                    self.features['pkt_ct'][index] +=1
+                    self.features['pkt_lt'][index] = packet.ts
+                    #print('2 ',self.features['rtt'][index],self.features['pkt_ct'][index],self.features['pkt_lt'][index])
 
-
+                #print(self.features['rtt'][index],self.features['pkt_ct'][index],self.features['pkt_lt'][index])
                 packet.metadata['nb_flows_monitored'] = self.nb_monitored_flows[packet.metadata['id']]
                 for ssd_dic_time in self.ssd_dic[packet.metadata['id']]:
                     ssd_dic_time.add(self.registers['flowselector_5tuple'][index], packet.ts)
@@ -263,7 +326,7 @@ class FlowSelector:
             # If the cell is empty, or the timeout has expired for the current
             # sorted flow, we store the new one, and it is not a fin packet
             if (curflow_key == 0 or packet.ts - curflow_ts > self.timeout) and not packet.fin_flag:
-
+                #print('1   ',str(packet.src_ip)+' '+str(packet.dst_ip)+' '+str(packet.src_port)+' '+str(packet.dst_port),'   ',packet.ts)
                 if curflow_key > 0:
 
                     self.log.info(str(packet.ts)+'\tRemove_flow\t'+str(self.registers['flowselector_5tuple'][index])+'\tTIMEOUT')
@@ -276,12 +339,14 @@ class FlowSelector:
                     if last_ret_ts > 0 and packet.ts - last_ret_ts < self.bin_time * self.window_size:
                         tmp = int((packet.ts - last_ret_ts)/self.bin_time)
                         index_prev = int((self.registers['sw_index'][prefix_id] - tmp)%self.window_size)
-
                         self.registers['sw'][(prefix_id*self.window_size)+index_prev] -= 1
+                        self.features['old_ret'][(prefix_id*self.window_size)+index_prev][index] -= 1
                         if self.registers['sw'][(prefix_id*self.window_size)+index_prev] < 0:
                             self.log.warning('1\t'+str(packet.metadata['id']))
 
                         self.registers['sw_sum'][prefix_id] -= 1
+                        self.ctr -= 1
+                        self.features['ret_flag'][index] -= 1
                     else:
                         #print self.retr
                         self.retr+=1
@@ -303,11 +368,15 @@ class FlowSelector:
                 self.features['fs'][index] = packet.tcp_payload_len
                 self.fd_start[index] = packet.ts
                 self.features['fd'][index] = packet.ts # start of the flow
+                self.features['rtt'][index] = 0
+                self.features['pkt_ct'][index] = 0
+                self.features['pkt_lt'][index] = packet.ts
+                #print('1 ',self.features['rtt'][index],self.features['pkt_ct'][index],self.features['pkt_lt'][index])
                 #self.features['index'][index] = index
                 # print (self.features['fs'])[index]
                 # print (self.features['fd'])[index]
                 #print (self.features['index'])[index]
-
+                #print(self.features['rtt'][index],self.features['pkt_ct'][index],self.features['pkt_lt'][index])
 
                 self.nb_monitored_flows[packet.metadata['id']] += 1
 
@@ -321,7 +390,6 @@ class FlowSelector:
 
             # If the timeout for the current stored packet has not expired
             else:
-                self.ctr+=1
                 return False
 
         

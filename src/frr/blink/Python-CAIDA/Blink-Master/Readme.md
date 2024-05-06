@@ -40,7 +40,3 @@ python -m python_code.blink.main -p 10000 --pcap <path to pcap file>
 ```
 7. Once you get the code working you can look into various aspects of the code to modify the parameters of the set up such as blink monitoring window, flow stats manitoring window ( in p4pipeline.py file in python_code) etc.
 
-# Understanding the Output: 
-
-Should mention more about the generated logs ??
-

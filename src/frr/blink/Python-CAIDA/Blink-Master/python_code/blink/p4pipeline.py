@@ -17,6 +17,7 @@ class P4Pipeline:
     def __init__(self, pcap_file,port, log_dir, log_level, window_size, nbprefixes, \
     nbflows_prefix, eviction_timeout, seed):
         # for ip monitoring
+        self.ct = 0
         self.ips = {}
         self.flow_time = {}
         self.flows = set()
@@ -29,11 +30,21 @@ class P4Pipeline:
         self.ts_ = 0
         
         # Logger for the Instance
-        logger.setup_logger('instance', log_dir+'/instance-logs/'+self.pcap+'_vals.log', level=10)
+        logger.setup_logger('instance', log_dir+'/rtt_logs/'+self.pcap+'_rtt_vals_ret.log', level=10)
         self.log2 = logging.getLogger('instance')
+
+        logger.setup_logger('fs_fd', log_dir+'/fs_fd_logs/'+self.pcap+'_vals_ret.log', level=10)
+        self.log3 = logging.getLogger('fs_fd')
+
+        # Logger for the Instance
+        logger.setup_logger('instance_2', log_dir+'/rtt_logs_norm/'+self.pcap+'_rtt_vals_norm.log', level=10)
+        self.log4 = logging.getLogger('instance_2')
+
+        logger.setup_logger('fs_fd_2', log_dir+'/fs_fd_logs_norm/'+self.pcap+'_vals_norm.log', level=10)
+        self.log5 = logging.getLogger('fs_fd_2')
         
         # Logger for the pipeline
-        logger.setup_logger('pipeline', log_dir+'/pipeline-logs/'+self.pcap+'pipeline.log', level=log_level)
+        logger.setup_logger('pipeline', log_dir+'/'+self.pcap+'pipeline.log', level=log_level)
         self.log = logging.getLogger('pipeline')
 
         
@@ -66,11 +77,16 @@ class P4Pipeline:
         # Initializing feature dict
 
         self.features['fs'] = [0] * (nbflows_prefix*nbprefixes) # *100 to make sure there is no overflow
+        self.features['rtt'] = [0] * (nbflows_prefix*nbprefixes) # maintain sum of packet time differences
+        self.features['pkt_ct'] = [0] * (nbflows_prefix*nbprefixes) # count of packets for the flows
+        self.features['pkt_lt'] = [0] * (nbflows_prefix*nbprefixes) # arrival time of last packet
         self.features['fd'] = [0] * (nbflows_prefix*nbprefixes) # *100 to make sure there is no overflow
         self.features['index'] = [0] * (nbflows_prefix*nbprefixes) # *100 to make sure there is no overflow
+        self.features['ret_flag'] = [0] * (nbflows_prefix*nbprefixes)
+        self.features['old_ret'] = [[0]*(nbflows_prefix*nbprefixes) for i in range(window_size)] 
         self.fd_start = [0] * (nbflows_prefix*nbprefixes) # *100 to make sure there is no overflow
 
-        # Registers used for the sliding window
+        # Registers used for the sliding window 
         self.registers['sw'] = []
         for _ in xrange(0, nbprefixes):
             self.registers['sw'] += [0] * window_size
@@ -125,10 +141,11 @@ class P4Pipeline:
     def process_packet(self, packet):
         
         # size of instance monitoring window
-        wind_size = 1.0
+        wind_size = 0.6
         # storing the time of arrival of first packet for relative time calculation
-        if self.ts_ ==0:
+        if self.ts_ ==0:           
             self.ts_ = packet.ts
+            print(self.ts_)
         # logging the flow stats every window size
         elif packet.ts - self.ts_ - self.time > wind_size:
             diff = int((packet.ts - self.ts_ - self.time)//wind_size)
@@ -136,21 +153,64 @@ class P4Pipeline:
             while diff > 0:
                 # print('Number of Flows in Window :',len(self.flows))
                 # self.flows.clear()
+                self.time+=wind_size
+                fs = ''
+                fs_n = ''
+                fd = ''
+                fd_n = ''
+                rtt_ = ''
+                rtt_n = ''
+                ct1 = 0
+                
+                for ind,x in enumerate(temp['fs']):
+                    if x != 0:
+                        ct1+=1
+                        if self.flowselector.features['ret_flag'][ind]!=0:
+                            fs = fs + str(x) + ',' 
+                            fd = fd +str(self.time-(temp['fd'][ind]-self.ts_))+',' #str(temp['fd'][ind]-self.ts_)+',' #
+                            if temp['pkt_ct'][ind]!= 0:
+                                rtt_ = rtt_ + str(temp['rtt'][ind]/temp['pkt_ct'][ind]) + ','
+                            else:
+                                rtt_ = rtt_ + 'N.V. ,'
+                        else:
+                            fs_n = fs_n + str(x) + ',' 
+                            fd_n = fd_n +str(self.time-(temp['fd'][ind]-self.ts_))+',' #str(temp['fd'][ind]-self.ts_)+',' #
+                            if temp['pkt_ct'][ind]!= 0:
+                                rtt_n = rtt_n + str(temp['rtt'][ind]/temp['pkt_ct'][ind]) + ','
+                            else:
+                                rtt_n = rtt_n + 'N.V. ,'
+                        #fd = fd +str(temp['fd'][ind])+','
+                diff-=1
+                self.log3.info('\n Instance:'+str(self.flowselector.registers['sw_sum'][0])+' ' +str(self.flowselector.features['ret_flag'].count(1)) +':'+ str(self.flowselector.rtt) + '\n')
+                self.log3.info(fs+'\n')     # used to log the flow's flow size values every instance
+                self.log3.info(fd+'\n')     # used to log the flow's flow duration values every instance
+
+                self.log2.info('\n Instance: '+str(self.flowselector.registers['sw_sum'][0])+' ' +str(self.flowselector.features['ret_flag'].count(1)) +':'+ str(self.flowselector.rtt) + '\n')
+                self.log2.info(rtt_+'\n')  # used to log the flow's rtt values every instance
+                self.ctr_.append(ct1)
+
+                self.log4.info('\n Instance:'+str(ct1-self.flowselector.registers['sw_sum'][0])+' ' +str(self.flowselector.features['ret_flag'].count(0)) +':'+ str(self.flowselector.rtt) + '\n')
+                self.log4.info(fs_n+'\n')     # used to log the flow's flow size values every instance
+                self.log4.info(fd_n+'\n')     # used to log the flow's flow duration values every instance
+
+                self.log5.info('\n Instance: '+str(ct1-self.flowselector.registers['sw_sum'][0])+' ' +str(self.flowselector.features['ret_flag'].count(0)) +':'+ str(self.flowselector.rtt) + '\n')
+                self.log5.info(rtt_n+'\n')  # used to log the flow's rtt values every instance
+                self.ctr_.append(ct1)
+
+                temp 
                 fs = ''
                 fd = ''
                 ct1 = 0
-                ct2 =0
-                self.time+=wind_size
+                
                 for ind,x in enumerate(temp['fs']):
                     if x != 0:
                         ct1+=1
                         fs = fs + str(x) + ',' 
-                        fd = fd + str(self.time-(temp['fd'][ind]-self.ts_))+','
-                diff-=1
-                self.log2.info('\n Instance:'+self.flowselector.rtt + '\n')
-                self.log2.info(fs+'\n')
-                self.log2.info(fd+'\n')
-                self.ctr_.append(ct1)
+                        fd = fd +self.flowselector.registers['flowselector_5tuple'][ind]+' \n' #str(temp['fd'][ind]-self.ts_)+',' #
+                with open('result2.txt','a') as fl:                       
+                    fl.write(str(self.flowselector.rtt) + '\n')
+                    #fl.write(fs+'\n')
+                    fl.write(fd+'\n')
                 
         
         # keeping count of the flows in the pcap
@@ -180,8 +240,9 @@ class P4Pipeline:
             #self.throughput.process_packet(packet)
             pass
         # Filter out SYN packets and ACK-only packets
+
         if matched and packet.tcp_payload_len > 0 and not packet.syn_flag:
-            
+            #print('0   ',str(packet.src_ip)+' '+str(packet.dst_ip)+' '+str(packet.src_port)+' '+str(packet.dst_port),'   ',packet.ts)
             packet.metadata['threshold'] = self.registers['threshold_registers'][packet.metadata['id']]
             
             start_ = time.time()
@@ -237,6 +298,7 @@ class P4Pipeline:
         #     f2.write('\n'+self.pcap+'   '+str(float(temp)/len(self.flow_time.keys())))
         
         # printing the list of prefixes in order of decreasing number of flows to that prefix
+        print(self.flowselector.temp.count(True),self.flowselector.temp.count(False))
         with open('prefixes.txt','w') as file:
             for x in sorted_by_packets:
                 file.write(x[0]+'.0/24'+' : '+str(x[1])+'\n')
