@@ -1,5 +1,5 @@
 import sys
-from top_prefixes import pcap_reader
+from top_prefixes-syn-ack import pcap_reader
 
 input = sys.argv[1]
 sorted_packets = pcap_reader('/dir_to_CAIDA_pcap/' + input)
