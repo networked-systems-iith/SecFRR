@@ -5,18 +5,20 @@ and the operator’s objectives. By evaluating average delays and losses of all 
 intervals, ROUTSCOUT makes splitting decisions according to the operator’s objectives. This
 code mimics the ROUTSCOUT implementation for a pcap.
 
-## Getting Started
-1. Dependencies
-The following Python libraries should be installed to run the code: scapy, mmh3 (hash) and ipaddr
-2. Installation and Execution
-* Download the following .py files: DelayMonitor.py, LossMonitor.py, pcap_parser.py, and main.py.
-* Download the pcaps to be run on Routscout implementation.
-* In main.py code, replace the input with pcap you want to test implementation on. Make sure that all the files are in a single folder.
-* To run on the terminal, go to the file directory where the files are downloaded and execute the following command:
-"python3 main.py"
+# RouteScout's Delay Monitor 
 
-## Output interpretation
-The output displays two lists:
-1. The first one is the list of average delays collected at every second.
-2. The second one is the list of percentage changes in average delays between consecutive intervals.
-Note that the time interval for collecting delays can be altered as required.
+- We assume that we have next hops A and B 
+- The capacity of IBLT is set to 781500 (according to the paper)
+- The details on forwarding and monitoring subranges for A and B are:
+![image](https://github.com/divyapathak24/test/assets/42262349/a460b0cb-8041-4129-8967-6fdb73933b1b)
+
+
+### Run the Delay Monitor code:
+```bash
+python3 main.py
+``` 
+Note 1: Please set the input, output_csv and output_json with appropriate directory paths in the main.py.
+- The csv and json files are generated for each pacp
+- The demo csv and json files for a pcap is present in `demo` folder
+
+Note 2: We get the average delay statistics for next hop A and B after every 1 second interval. The CSV contains aggregated average values per interval while the JSON contains per-flow delay values during the interval.
