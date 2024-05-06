@@ -6,12 +6,11 @@ This repository contains code and resources related to our paper titled "Anomaly
 ![image](https://github.com/networked-systems-iith/FRR-Attacks/assets/42262349/ac99c0de-42be-41ea-ab5a-8943f4c2af1c)
 
 
-## Key Features
+## Key Elements
 - Implementation of attack mechanism for two fast reroute systems - [Blink](https://github.com/nsg-ethz/Blink) and [Routescout](https://conferences.sigcomm.org/sosr/2021/papers/s21.pdf).
 - Integration of flow feature collection logic with fast reroute systems
-- Utilization of realistic traffic traces using the CAIDA dataset
+- Integration of realistic traffic traces using the CAIDA dataset
 - Implementation of the proposed detection mechanism
-- Detailed documentation and usage instructions
 
 ## Getting Started
 To get started with using the attack detection mechanism, follow these steps:
