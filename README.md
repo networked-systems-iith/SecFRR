@@ -3,8 +3,7 @@
 ## Overview
 This repository contains code and resources related to our paper titled "Anomaly Detection in In-Network Fast ReRoute Systems" We propose a novel mechanism to detect malicious traffic patterns targeting fast reroute systems, which can compromise network performance and lead to degradation. 
 
-![image](https://github.com/networked-systems-iith/FRR-Attacks/assets/42262349/ac99c0de-42be-41ea-ab5a-8943f4c2af1c)
-
+<img src="https://github.com/networked-systems-iith/FRR-Attacks/assets/42262349/ac99c0de-42be-41ea-ab5a-8943f4c2af1c" width="400" height="300">
 
 ## Key Elements
 - Implementation of attack mechanism for two fast reroute systems - [Blink](https://github.com/nsg-ethz/Blink) and [Routescout](https://conferences.sigcomm.org/sosr/2021/papers/s21.pdf).
@@ -36,5 +35,5 @@ Additionally, you may find our following work relevant:
 SA Harish, Divya Pathak, Mahanth Kumar Valluri, Sree Prathyush Chinta, Amogh Bedarakota, Rinku Shah, Praveen Tammana. "Securing In-Network Fast Control Loop Systems from Adversarial Attacks." In *16th International Conference on COMmunication Systems & NETworkS (COMSNETS)*, IEEE, 2024. [Link to paper](https://ieeexplore.ieee.org/abstract/document/10427291)
 
 ## Get Involved
-Feel free to raise issues, submit pull requests, or reach out to us [here](netsys@iith.ac.in) with any questions or suggestions. 
+Feel free to raise issues, submit pull requests, or reach out to us [here](praveent@cse.iith.ac.in) with any questions or suggestions. 
 
