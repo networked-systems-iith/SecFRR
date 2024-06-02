@@ -3,7 +3,7 @@
 ## Overview
 This repository contains code and resources related to our paper titled "Anomaly Detection in In-Network Fast ReRoute Systems" We propose a novel mechanism to detect malicious traffic patterns targeting fast reroute systems, which can compromise network performance and lead to degradation. 
 
-<img src="https://github.com/networked-systems-iith/FRR-Attacks/assets/42262349/ac99c0de-42be-41ea-ab5a-8943f4c2af1c" width="400" height="300">
+<img src="https://github.com/networked-systems-iith/FRR-Attacks/assets/42262349/ac99c0de-42be-41ea-ab5a-8943f4c2af1c" width="600" height="400">
 
 ## Key Elements
 - Implementation of attack mechanism for two fast reroute systems - [Blink](https://github.com/nsg-ethz/Blink) and [Routescout](https://conferences.sigcomm.org/sosr/2021/papers/s21.pdf).
