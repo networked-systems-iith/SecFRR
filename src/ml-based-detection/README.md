@@ -1,4 +1,4 @@
-**ML-based detection**
+## ML-based detection
 
 (1) Automatic identification of top features: Our approach involves developing an automated technique to extract traffic trace features using FRR state information (such as retransmission counts and packet delays per epoch). Utilizing machine learning, we then determine the top-k features that best enhance detection accuracy.
 
